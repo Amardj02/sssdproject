@@ -52,10 +52,6 @@ button:hover {
     display: none;
 }
 
-#otp-container {
-    text-align: center;
-    margin-top: 30px;
-}
 
 #password-toggle, #password-toggle-signup {
     cursor: pointer;
@@ -64,4 +60,73 @@ button:hover {
     position: absolute;
     top: 15px;
     right: 10px;
+}
+/* OTP Container Styling */
+#otp-container {
+    display: none;
+    max-width: 400px;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+/* Heading Styling */
+#otp-container h2 {
+    text-align: center;
+    color: #333;
+}
+
+/* Paragraph Styling */
+#otp-container p {
+    text-align: center;
+    color: #555;
+}
+
+/* QR Code Styling */
+#otp-container .qr-code-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#otp-container #qr-code {
+    width: 200px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+/* OTP Code Label Styling */
+#otp-container label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+}
+
+/* OTP Code Input Field Styling */
+#otp-container #otp-code {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+/* Submit OTP Button Styling */
+#otp-container #submit-otp {
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#otp-container #submit-otp:hover {
+    background-color: #45a049;
 }

@@ -13,19 +13,34 @@ document.addEventListener('DOMContentLoaded', function () {
         clearMessage();
     });
 
-    // Handle login form submission
+    // Variable to track failed login attempts
+    let failedAttempts = localStorage.getItem('failedAttempts') ? parseInt(localStorage.getItem('failedAttempts')) : 0;
+
     document.getElementById('login-form').addEventListener('submit', async function (e) {
         e.preventDefault();
 
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
 
+        // Only include hCaptcha response if captcha is visible (i.e., after 3 failed attempts)
+        const hcaptchaResponse = document.getElementById('hcaptcha-container').style.display === 'block' ? grecaptcha.getResponse() : '';
+
+        const requestBody = {
+            username,
+            password
+        };
+
+        // Include hCaptcha response in the body only if required
+        if (hcaptchaResponse) {
+            requestBody['h-captcha-response'] = hcaptchaResponse;
+        }
+
         const response = await fetch('http://localhost/sssdproject/api/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify(requestBody)
         });
 
         const rawResponse = await response.text();
@@ -42,6 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (data.status === 200) {
                     // Save the token in localStorage
                     localStorage.setItem('token', data.token);
+                    localStorage.setItem('failedAttempts', 0);
 
                     if (data.message === "Scan the QR code and enter the OTP.") {
                         document.getElementById('qr-code').src = data.link;
@@ -50,7 +66,20 @@ document.addEventListener('DOMContentLoaded', function () {
                         window.location.href = 'home.html';
                     }
                 } else {
-                    displayMessage(data.message || 'Login failed', 'error');
+                    // Increment the failed login attempts counter
+                    failedAttempts++;
+
+                    // If failed attempts reach 3, show hCaptcha and reset the captcha
+                    if (failedAttempts >= 3) {
+                        document.getElementById('hcaptcha-container').style.display = 'block';
+                        grecaptcha.reset(); // Reset hCaptcha for a new challenge
+                        displayMessage('Please solve the CAPTCHA to continue.', 'error');
+                    } else {
+                        displayMessage(data.message || 'Login failed', 'error');
+                    }
+
+                    // Store failed attempts in localStorage
+                    localStorage.setItem('failedAttempts', failedAttempts);
                 }
             } else {
                 displayMessage(data.message || 'Login failed', 'error');

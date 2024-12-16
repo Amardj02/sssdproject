@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login and Register</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://hcaptcha.com/1/api.js" async defer></script>
 </head>
 <body>
 
@@ -22,11 +23,17 @@
             <input type="password" id="password" name="password" required>
             <span id="password-toggle" style="position: absolute; right: 10px; top: 10px; cursor: pointer;">Show</span>
         </div>
-
+    
+        <!-- Hidden hCaptcha container -->
+        <div id="hcaptcha-container" style="display:none;">
+            <div class="h-captcha" data-sitekey="516a546e-386c-4f6a-88d2-33da46907a00"></div>
+        </div>
+    
         <button type="submit">Login</button>
-
+    
         <p>Don't have an account? <a href="javascript:void(0)" id="show-signup">Sign up</a></p>
     </form>
+    
 
     <!-- Sign-Up Form -->
     <form id="signup-form" style="display:none;">
@@ -55,14 +62,17 @@
     </form>
 
     <!-- OTP Form (for first-time login) -->
-    <div id="otp-container" style="display:none;">
+    <div id="otp-container">
         <h2>Two-Factor Authentication</h2>
         <p>Scan the QR code with your authentication app and enter the OTP:</p>
-        <img id="qr-code" src="" alt="QR Code" style="width: 200px;">
+        <div class="qr-code-container">
+            <img id="qr-code" src="" alt="QR Code">
+        </div>
         <label for="otp-code">OTP Code:</label>
         <input type="text" id="otp-code" name="otp-code" required>
         <button type="button" id="submit-otp">Submit OTP</button>
     </div>
+    
 
     <script src="script.js"></script>
 </body>

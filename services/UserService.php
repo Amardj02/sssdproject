@@ -28,7 +28,7 @@ class UserService extends BaseService
         curl_close($ch);
         if ($response === false) {
             Flight::json(['status' => 500, 'message' => 'Could not retrieve data from the API.'], 500);
-            return false;  // Exit the function
+            return false; 
         }
 
         if (str_contains($response, $suffix)) {
@@ -162,53 +162,84 @@ class UserService extends BaseService
     }
 
     public function login($data)
-    {
-        $username = $data['username'];
-        $password = $data['password'];
+{
+    $username = $data['username'];
+    $password = $data['password'];
 
-        if ($username == '' || $password == '') {
-            Flight::json(['status' => 500, 'message' => 'All fields have to be filled in.'], 500);
-            return;
-        }
+    $ipAddress = $_SERVER['REMOTE_ADDR'];
 
-        $emailVal = filter_var($username, FILTER_VALIDATE_EMAIL);
+    $captchaResponse = isset($data['h-captcha-response']) ? $data['h-captcha-response'] : '';
 
-        if ($emailVal) {
-            $user = $this->checkExistenceForEmail($username);
-            if (!$user) {
-                Flight::json(['status' => 500, 'message' => 'No user found with this email.'], 500);
-                return;
-            }
-
-            if (!isset($user['password']) || !password_verify($data["password"], $user['password'])) {
-                Flight::json(['status' => 500, 'message' => 'Invalid password.'], 500);
-                return;
-            }
-        } else {
-            $user = $this->checkExistenceForUsername($username);
-            if (!$user) {
-                Flight::json(['status' => 500, 'message' => 'No user found with this username.'], 500);
-                return;
-            }
-
-            if (!isset($user['password']) || !password_verify($data["password"], $user['password'])) {
-                Flight::json(['status' => 500, 'message' => 'Invalid password.'], 500);
-                return;
-            }
-        }
-
-        $secret = $user['secret'];
-        $coded_user = [$user['full_name'], $user['username'], $user['email'], $user['phone_number'], $user['secret'], $user['login_count']];
-        $token = JWT::encode($coded_user, JWT_SECRET, 'HS256');
-
-        if ($user['login_count'] == 0) {
-            $qrLink = $this->generateQrCode($secret, $user['username']);
-            Flight::json(['status' => 200, 'message' => 'Scan the QR code and enter the OTP.', 'link' => $qrLink, 'token' => $token], 200);
+    if ($this->numberOfFailedAttempts($ipAddress)) {
+        if (!$this->verifyCaptcha($captchaResponse)) {
+            Flight::json([
+                "status" => 500,
+                "message" => "Captcha validation failed.",
+                "captchaRequired" => true
+            ], 500);
             return;
         } else {
-            Flight::json(['status' => 200, 'message' => 'Successful login.', 'token' => $token], 200);
+            $this->resetFailedAttempts($ipAddress);
         }
     }
+
+    if ($username == '' || $password == '') {
+        Flight::json(['status' => 500, 'message' => 'All fields have to be filled in.'], 500);
+        return;
+    }
+
+    $emailVal = filter_var($username, FILTER_VALIDATE_EMAIL) ? true : false;
+
+    if ($emailVal) {
+        $user = $this->checkExistenceForEmail($username);
+
+        if (!$user || $user['email'] != $username) {
+            $this->trackFailedAttempts($ipAddress);
+            Flight::json(["status" => 500, "message" => "This email does not exist."], 500);
+            return;
+        }
+    } else {
+        $user = $this->checkExistenceForUsername($username);
+
+        if (!$user || $user['username'] != $username) {
+            $this->trackFailedAttempts($ipAddress);
+            Flight::json(["status" => 500, "message" => "This username does not exist."], 500);
+            return;
+        }
+    }
+
+    if (!isset($user['password']) || !password_verify($data["password"], $user['password'])) {
+        $this->trackFailedAttempts($ipAddress);
+        Flight::json(["status" => 500, "message" => "Invalid password."], 500);
+        return;
+    }
+
+    $secret = $user['secret'];
+    $coded_user = [$user['full_name'], $user['username'], $user['email'], $user['phone_number'], $user['secret'], $user['login_count']];
+
+    $this->resetFailedAttempts($ipAddress);
+
+    $token = JWT::encode($coded_user, JWT_SECRET, 'HS256');
+
+    if ($user['login_count'] == 0) {
+        $qrLink = $this->generateQrCode($secret, $user['username']);
+        Flight::json([
+            'status' => 200,
+            'message' => 'Scan the QR code and enter the OTP.',
+            'link' => $qrLink,
+            'token' => $token
+        ], 200);
+        return;
+    } else {
+        Flight::json([
+            'status' => 200,
+            'message' => 'Successful login.',
+            'token' => $token
+        ], 200);
+        return;
+    }
+}
+
 
     private function generateOTPassword()
     {
@@ -288,5 +319,57 @@ class UserService extends BaseService
         } catch (Exception $e) {
             Flight::json(['status' => 401, 'message' => 'Invalid token.'], 401);
         }
+    }
+    public function captcha()
+    {
+        $data = ['secret' => "ES_545286baf1f04a26b550e8b3c428a7de", 'response' => $_POST['h-captcha-response']];
+        $verify = curl_init();
+        curl_setopt($verify, CURLOPT_URL, "https://hcaptcha.com/siteverify");
+        curl_setopt($verify, CURLOPT_POST, true);
+        curl_setopt($verify, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($verify, CURLOPT_RETURNTRANSFER, true);
+        $response = curl_exec($verify);
+        $responseData = json_decode($response);
+        if ($responseData->success) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    public function verifyCaptcha($captchaResponse)
+    {
+        $data = [
+            'secret' => "ES_545286baf1f04a26b550e8b3c428a7de",
+            'response' => $captchaResponse
+        ];
+        $verify = curl_init();
+        curl_setopt($verify, CURLOPT_URL, "https://hcaptcha.com/siteverify");
+        curl_setopt($verify, CURLOPT_POST, true);
+        curl_setopt($verify, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($verify, CURLOPT_RETURNTRANSFER, true);
+        $response = curl_exec($verify);
+        $responseData = json_decode($response);
+        if ($responseData->success) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    private function trackFailedAttempts($ipAddress)
+    {
+
+        Flight::userdao()->trackFailedAttempts($ipAddress);
+
+    }
+
+    private function resetFailedAttempts($ipAddress)
+    {
+        Flight::userdao()->resetFailedAttempts($ipAddress);
+
+    }
+
+    public function numberOfFailedAttempts($ipAddress)
+    {
+        return Flight::userdao()->numberOfFailedAttempts($ipAddress);
     }
 }
