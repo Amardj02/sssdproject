@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login and Register</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Message container to display feedback from backend -->
+    <div id="message-container"></div>
+
+    <!-- Login Form -->
+    <form id="login-form" style="display:block;">
+        <h2>Login</h2>
+        <label for="username">Username/Email:</label>
+        <input type="text" id="username" name="username" required>
+        
+        <label for="password">Password:</label>
+        <div style="position: relative;">
+            <input type="password" id="password" name="password" required>
+            <span id="password-toggle" style="position: absolute; right: 10px; top: 10px; cursor: pointer;">Show</span>
+        </div>
+
+        <button type="submit">Login</button>
+
+        <p>Don't have an account? <a href="javascript:void(0)" id="show-signup">Sign up</a></p>
+    </form>
+
+    <!-- Sign-Up Form -->
+    <form id="signup-form" style="display:none;">
+        <h2>Sign Up</h2>
+        <label for="full_name">Full Name:</label>
+        <input type="text" id="full_name" name="full_name" required>
+        
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+        
+        <label for="phone_number">Phone Number:</label>
+        <input type="text" id="phone_number" name="phone_number" required>
+        
+        <label for="username">Username:</label>
+        <input type="text" id="username-signup" name="username" required>
+
+        <label for="password">Password:</label>
+        <div style="position: relative;">
+            <input type="password" id="password-signup" name="password" required>
+            <span id="password-toggle-signup" style="position: absolute; right: 10px; top: 10px; cursor: pointer;">Show</span>
+        </div>
+
+        <button type="submit">Register</button>
+
+        <p>Already have an account? <a href="javascript:void(0)" id="show-login">Login</a></p>
+    </form>
+
+    <!-- OTP Form (for first-time login) -->
+    <div id="otp-container" style="display:none;">
+        <h2>Two-Factor Authentication</h2>
+        <p>Scan the QR code with your authentication app and enter the OTP:</p>
+        <img id="qr-code" src="" alt="QR Code" style="width: 200px;">
+        <label for="otp-code">OTP Code:</label>
+        <input type="text" id="otp-code" name="otp-code" required>
+        <button type="button" id="submit-otp">Submit OTP</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

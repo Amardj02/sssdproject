@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Welcome</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Link to your external CSS file if needed -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 400px;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        .welcome-message {
+            margin: 20px 0;
+        }
+        .btn {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Welcome to Your Dashboard</h1>
+    <div id="welcome-message" class="welcome-message"></div>
+    <button id="logout-btn" class="btn">Logout</button>
+</div>
+
+<script>
+// Wait until the document is ready
+document.addEventListener('DOMContentLoaded', function () {
+    // Get the JWT token from localStorage
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+        // If no token, redirect to login page
+        window.location.href = 'index.html';
+        return;
+    }
+
+    // Decode the token to extract user information (name, username, etc.)
+    const decoded = JSON.parse(atob(token.split('.')[1]));
+    const userName = decoded[0];  // Assuming the name is the first element in the JWT payload
+
+    // Show the personalized greeting
+    document.getElementById('welcome-message').innerText = `Hello, ${userName}!`;
+
+    // Logout functionality
+    document.getElementById('logout-btn').addEventListener('click', function () {
+        // Clear the token from localStorage
+        localStorage.removeItem('token');
+        
+        // Redirect to the login page
+        window.location.href = 'index.html';
+    });
+});
+</script>
+
+</body>
+</html>
